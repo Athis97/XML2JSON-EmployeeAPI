@@ -1,60 +1,143 @@
-# CodeIgniter 4 Framework
 
-## What is CodeIgniter?
+# CodeIgniter 4 Application for Employee Management & XML Data Handling
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+## Overview
+This is a simple CodeIgniter 4 application that provides the following functionalities:
 
-This repository holds the distributable version of the framework.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+- **Employee Registration** with token generation and storage.
+- **Token-based Authentication API** to fetch employee data.
+- **XML File Upload and Parsing**:
+  - Converts XML data into JSON format.
+  - Stores the JSON data in the database.
+  - Displays the stored JSON data.
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+## Features
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+### Employee Registration:
+- User registration with form validation (client & server-side).
+- Each registered employee is assigned a unique token.
 
-## Important Change with index.php
+### Token-based API:
+- API to fetch employee data by employee ID and token.
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+### XML Handling:
+- Upload an XML file, parse it, convert to JSON, and store it in the database.
+- View the stored XML data in JSON format.
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+## Prerequisites
+- PHP >= 7.4
+- Composer
+- CodeIgniter 4.x
+- MySQL or SQLite for database
 
-**Please** read the user guide for a better explanation of how CI4 works!
+## Installation
 
-## Repository Management
+1. Clone the repository:
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+    ```bash
+    git clone https://github.com/Athis97/XML2JSON-EmployeeAPI.git
+    cd XML2JSON-EmployeeAPI
+    ```
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+2. Install dependencies:
 
-## Contributing
+    ```bash
+    composer install
+    ```
 
-We welcome contributions from the community.
+3. Copy the `.env.example` to `.env`:
 
-Please read the [*Contributing to CodeIgniter*](https://github.com/codeigniter4/CodeIgniter4/blob/develop/CONTRIBUTING.md) section in the development repository.
+    ```bash
+    cp env.example .env
+    ```
 
-## Server Requirements
+4. Update your `.env` file with the database credentials:
 
-PHP version 8.1 or higher is required, with the following extensions installed:
+    ```env
+    database.default.hostname = localhost
+    database.default.database = your_database_name
+    database.default.username = your_db_username
+    database.default.password = your_db_password
+    database.default.DBDriver = MySQL
+    ```
 
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
+5. Migrate the database to create the required tables:
 
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - If you are still using PHP 7.4 or 8.0, you should upgrade immediately.
-> - The end of life date for PHP 8.1 will be December 31, 2025.
+    ```bash
+    php spark migrate
+    ```
 
-Additionally, make sure that the following extensions are enabled in your PHP:
+6. Start the development server:
 
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+    ```bash
+    php spark serve
+    ```
+
+   The application should now be running at [http://localhost:8080](http://localhost:8080).
+
+## Folder Structure
+
+### Controllers:
+- `EmployeeController.php`: Handles employee registration and form submission.
+- `VehAvailController.php`: Manages XML data upload, conversion, and storage.
+- `ApiController.php`: Provides the token-based employee data retrieval API.
+
+### Models:
+- `Employee.php`: Defines the employee model.
+- `VehAvail.php`: Defines the XML data model.
+
+### Views:
+- `employee_register.php`: Registration form.
+- `employee_success.php`: Success message after employee registration.
+- `upload_xml.php`: XML upload form.
+- `veh_avail_view.php`: Displays stored JSON data.
+
+## Routes
+
+```php
+$routes->get('/', 'Home::index');
+$routes->get('employee/register', 'EmployeeController::register');
+$routes->post('employee/save', 'EmployeeController::save');
+$routes->get('employee/success', 'EmployeeController::success');
+$routes->get('veh-avail/show', 'VehAvailController::showData');
+$routes->get('veh-avail/upload', 'VehAvailController::uploadXmlForm');
+$routes->post('veh-avail/import', 'VehAvailController::importXml');
+
+// API routes
+$routes->get('api/employee', 'ApiController::getEmployee');
+```
+
+## API Documentation
+
+### Get Employee Data:
+- **URL**: `GET /api/employee`
+- **Parameters**:
+  - `token` (required): The employeeâ€™s unique token.
+  - `id` (required): Employee ID.
+- **Response**: JSON containing employee data or error message.
+
+#### Example API Request
+
+```http
+GET /api/employee?token=abc123&id=1
+Content-Type: application/json
+```
+
+#### Response:
+
+```json
+{
+    "id": 1,
+    "name": "John Doe",
+    "email": "johndoe@example.com",
+    "token": "abc123"
+}
+```
+
+## XML Upload Example
+
+To upload XML and convert it to JSON:
+
+1. Go to [http://localhost:8080/veh-avail/upload](http://localhost:8080/veh-avail/upload).
+2. Select the XML file and click upload.
+3. Data will be saved in JSON format and can be viewed at [http://localhost:8080/veh-avail/show](http://localhost:8080/veh-avail/show).
